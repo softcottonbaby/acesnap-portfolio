@@ -1,0 +1,46 @@
+/* App.css */
+
+/* Smooth scrolling everywhere */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom glowing red text */
+.glow-red {
+  text-shadow: 0 0 10px rgba(255, 0, 0, 0.8),
+               0 0 20px rgba(255, 0, 0, 0.6),
+               0 0 30px rgba(255, 0, 0, 0.4);
+}
+
+/* Neon border glow */
+.neon-border {
+  border: 2px solid rgba(255, 0, 0, 0.6);
+  box-shadow: 0 0 15px rgba(255, 0, 0, 0.6),
+              0 0 30px rgba(255, 0, 0, 0.4);
+}
+
+/* Animated background gradient */
+.bg-animated {
+  background: linear-gradient(-45deg, #000000, #1a0000, #330000, #660000);
+  background-size: 400% 400%;
+  animation: gradientShift 12s ease infinite;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Floating particles effect */
+.particle {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 0, 0, 0.5);
+  animation: floatUp 8s linear infinite;
+}
+
+@keyframes floatUp {
+  from { transform: translateY(100vh) scale(0.5); opacity: 0.6; }
+  to { transform: translateY(-10vh) scale(1.2); opacity: 0; }
+}
