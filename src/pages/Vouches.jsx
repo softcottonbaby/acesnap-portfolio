@@ -2,12 +2,9 @@ import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Layout from "../components/Layout";
 import { Star, Plus, Link as LinkIcon, Upload, Trash2 } from "lucide-react";
-import { createClient } from "@supabase/supabase-js";
 
-// --- Supabase Config ---
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// ✅ Import the Supabase client you already set up
+import { supabase } from "../lib/supabaseClient";
 
 export default function Vouches() {
   const [reviews, setReviews] = useState([]);
@@ -135,7 +132,6 @@ export default function Vouches() {
   return (
     <Layout>
       <div className="flex flex-col items-center w-full px-6 py-12 relative">
-
         {/* --- Admin Welcome Animation --- */}
         <AnimatePresence>
           {showAdminAnim && (
