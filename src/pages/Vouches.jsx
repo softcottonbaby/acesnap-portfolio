@@ -2,6 +2,12 @@ import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Layout from "../components/Layout";
 import { Star, Plus, Link as LinkIcon, Upload, Trash2 } from "lucide-react";
+import { createClient } from "@supabase/supabase-js";
+
+// --- Supabase Config ---
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export default function Vouches() {
   const [reviews, setReviews] = useState([]);
@@ -29,32 +35,89 @@ export default function Vouches() {
   const [postPassword, setPostPassword] = useState("AceSnapsVouches1");
   const [newPostPassword, setNewPostPassword] = useState("");
 
-  // Load from localStorage
+  // ✅ Load reviews from Supabase
   useEffect(() => {
-    const storedReviews = localStorage.getItem("vouches");
-    const storedPassword = localStorage.getItem("postPassword");
-    if (storedReviews) setReviews(JSON.parse(storedReviews));
-    if (storedPassword) setPostPassword(storedPassword);
+    fetchReviews();
   }, []);
 
-  // Save to localStorage when reviews change
-  useEffect(() => {
-    localStorage.setItem("vouches", JSON.stringify(reviews));
-  }, [reviews]);
+  const fetchReviews = async () => {
+    const { data, error } = await supabase
+      .from("vouches")
+      .select("*")
+      .order("created_at", { ascending: false });
 
-  // Save new post password
-  const handleChangePostPassword = () => {
-    if (newPostPassword.trim().length < 4) {
-      alert("Password must be at least 4 characters long.");
-      return;
-    }
-    setPostPassword(newPostPassword);
-    localStorage.setItem("postPassword", newPostPassword);
-    setNewPostPassword("");
-    alert("Posting password updated successfully!");
+    if (error) console.error("Error fetching reviews:", error);
+    else setReviews(data);
   };
 
-  // Detect Shift + A for admin
+  // ✅ Save new review to Supabase
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (form.password !== postPassword) {
+      setError("Invalid password");
+      return;
+    }
+
+    if (!form.name || !form.review || form.rating === 0) {
+      setError("Please fill all fields and select a rating.");
+      return;
+    }
+
+    const { error } = await supabase.from("vouches").insert([
+      {
+        name: form.name,
+        review: form.review,
+        rating: form.rating,
+        link: form.link,
+        image: form.image,
+      },
+    ]);
+
+    if (error) {
+      console.error("Error adding review:", error);
+      setError("Failed to save review.");
+    } else {
+      await fetchReviews(); // refresh list
+      setForm({ name: "", review: "", rating: 0, password: "", link: "", image: "" });
+      setError("");
+      setIsModalOpen(false);
+    }
+  };
+
+  // ✅ Delete review from Supabase
+  const handleDelete = async (id) => {
+    const { error } = await supabase.from("vouches").delete().eq("id", id);
+    if (error) console.error("Error deleting review:", error);
+    else fetchReviews();
+  };
+
+  // Admin login
+  const handleAdminLogin = (e) => {
+    e.preventDefault();
+    if (adminPassword === "daniel") {
+      setIsAdmin(true);
+      setShowAdminLogin(false);
+      setAdminPassword("");
+      setAdminError("");
+    } else {
+      setAdminError("Invalid admin password.");
+    }
+  };
+
+  // Handle Avatar Upload
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setForm({ ...form, image: reader.result });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Detect Shift+A for admin
   useEffect(() => {
     const handleKeydown = (e) => {
       if (e.shiftKey && e.key.toLowerCase() === "a") {
@@ -69,68 +132,11 @@ export default function Vouches() {
     return () => window.removeEventListener("keydown", handleKeydown);
   }, []);
 
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setForm({ ...form, image: reader.result });
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-
-    if (form.password !== postPassword) {
-      setError("Invalid password");
-      return;
-    }
-
-    if (!form.name || !form.review || form.rating === 0) {
-      setError("Please fill all fields and select a rating.");
-      return;
-    }
-
-    setReviews([
-      ...reviews,
-      {
-        id: Date.now(),
-        name: form.name,
-        review: form.review,
-        rating: form.rating,
-        link: form.link,
-        image: form.image,
-      },
-    ]);
-
-    setForm({ name: "", review: "", rating: 0, password: "", link: "", image: "" });
-    setError("");
-    setIsModalOpen(false);
-  };
-
-  const handleDelete = (id) => {
-    setReviews(reviews.filter((r) => r.id !== id));
-  };
-
-  const handleAdminLogin = (e) => {
-    e.preventDefault();
-    if (adminPassword === "daniel") {
-      setIsAdmin(true);
-      setShowAdminLogin(false);
-      setAdminPassword("");
-      setAdminError("");
-    } else {
-      setAdminError("Invalid admin password.");
-    }
-  };
-
   return (
     <Layout>
       <div className="flex flex-col items-center w-full px-6 py-12 relative">
 
-        {/* Admin Welcome Animation */}
+        {/* --- Admin Welcome Animation --- */}
         <AnimatePresence>
           {showAdminAnim && (
             <motion.div
@@ -152,7 +158,7 @@ export default function Vouches() {
           )}
         </AnimatePresence>
 
-        {/* Admin Login (after animation) */}
+        {/* --- Admin Login --- */}
         {showAdminLogin && !isAdmin && (
           <form onSubmit={handleAdminLogin} className="mb-8 bg-zinc-900 p-6 rounded-xl shadow-lg border border-zinc-800">
             <h2 className="text-xl font-bold text-white mb-4">Admin Login</h2>
@@ -173,7 +179,7 @@ export default function Vouches() {
           </form>
         )}
 
-        {/* Admin Panel */}
+        {/* --- Admin Panel --- */}
         {isAdmin && (
           <div className="w-full max-w-2xl bg-zinc-900 border border-zinc-800 p-6 rounded-xl mb-10 shadow-lg">
             <h2 className="text-xl font-bold text-white mb-4">Admin Panel</h2>
@@ -189,7 +195,15 @@ export default function Vouches() {
                 className="flex-1 px-4 py-2 rounded-lg bg-black/50 border border-zinc-700 text-white focus:border-red-500 outline-none"
               />
               <button
-                onClick={handleChangePostPassword}
+                onClick={() => {
+                  if (newPostPassword.trim().length < 4) {
+                    alert("Password must be at least 4 characters long.");
+                    return;
+                  }
+                  setPostPassword(newPostPassword);
+                  setNewPostPassword("");
+                  alert("Posting password updated successfully!");
+                }}
                 className="px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white rounded-lg font-semibold shadow-lg"
               >
                 Change
@@ -198,7 +212,7 @@ export default function Vouches() {
           </div>
         )}
 
-        {/* Vouches header */}
+        {/* --- Vouches Header --- */}
         <motion.h1
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -210,7 +224,7 @@ export default function Vouches() {
           Here you can find reviews from my customers.
         </p>
 
-        {/* Reviews */}
+        {/* --- Reviews --- */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl mb-20">
           {reviews.map((r) => (
             <motion.div
@@ -269,7 +283,7 @@ export default function Vouches() {
           ))}
         </div>
 
-        {/* Floating Add Vouch Button */}
+        {/* --- Floating Add Button --- */}
         <motion.button
           onClick={() => setIsModalOpen(true)}
           className="fixed bottom-6 right-6 w-14 h-14 rounded-full flex items-center justify-center
@@ -280,7 +294,7 @@ export default function Vouches() {
           <Plus className="w-7 h-7" />
         </motion.button>
 
-        {/* Vouch Modal */}
+        {/* --- Modal --- */}
         <AnimatePresence>
           {isModalOpen && (
             <motion.div
@@ -314,8 +328,6 @@ export default function Vouches() {
                     className="w-full px-4 py-2 rounded-lg bg-black/50 border border-zinc-700 text-white focus:border-red-500 outline-none"
                     rows="4"
                   />
-
-                  {/* Link */}
                   <input
                     type="text"
                     placeholder="Your Website / Creator Link (optional)"
