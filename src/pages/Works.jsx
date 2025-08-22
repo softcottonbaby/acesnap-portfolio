@@ -68,7 +68,7 @@ export default function Works() {
       <div className="flex flex-col items-center text-center w-full px-6 select-none">
         {/* Header */}
         <h1 className="text-4xl font-bold text-red-500 mb-4 uppercase" id="works">
-          MY WORKS
+          MY WORK
         </h1>
         <p className="text-gray-400 mb-6 max-w-2xl">
           A collection of my past design projects — from thumbnails to banners
