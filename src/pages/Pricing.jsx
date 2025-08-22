@@ -68,16 +68,16 @@ export default function Pricing() {
   return (
     <Layout>
       <div className="w-full text-center select-none">
-        {/* Title with gradient */}
+        {/* Title */}
         <h1 className="text-4xl font-bold text-red-500 mb-4 uppercase">
-  MY PRICES
-</h1>
+          MY PRICES
+        </h1>
         <p className="text-gray-400 mb-14 max-w-2xl mx-auto">
           Clear pricing for professional designs — flexible to fit your budget.
         </p>
 
-        {/* Grid */}
-        <div className="grid grid-cols-3 gap-10 max-w-7xl mx-auto w-full px-6">
+        {/* ✅ Auto-fit Grid (pure CSS) */}
+        <div id="pricesGrid" className="max-w-7xl mx-auto w-full px-6">
           {plans.map((plan, i) => (
             <motion.div
               key={i}
@@ -89,7 +89,7 @@ export default function Pricing() {
                 stiffness: 120,
                 damping: 18,
               }}
-              className="bg-zinc-900/80 border border-zinc-700 rounded-2xl p-8 shadow-md hover:shadow-xl hover:scale-[1.02] transition-all duration-300 flex flex-col items-center text-center"
+              className="bg-zinc-900/80 border border-zinc-700 rounded-2xl p-8 shadow-md hover:shadow-xl hover:scale-[1.02] transition-all duration-300 flex flex-col items-center text-center h-full min-w-0"
             >
               {/* Category Title */}
               <h2 className="text-2xl font-semibold text-white mb-6 border-b border-zinc-700 pb-2 w-full">
@@ -141,8 +141,17 @@ export default function Pricing() {
         </div>
       </div>
 
-      {/* Gradient Border Fix */}
+      {/* Styles */}
       <style jsx>{`
+        /* Fluid, auto-fitting grid: as many columns as fit at ≥ 300px each */
+        #pricesGrid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+          gap: 2.5rem; /* ~ Tailwind gap-10 */
+          align-items: stretch;
+        }
+
+        /* Gradient Border Utility (unchanged) */
         .gradient-border {
           border: 1px solid transparent;
           background-image: linear-gradient(to right, #18181b, #18181b),
