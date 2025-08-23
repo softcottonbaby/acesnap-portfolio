@@ -32,9 +32,10 @@ export default function Vouches() {
   const [postPassword, setPostPassword] = useState("AceSnapsVouches1");
   const [newPostPassword, setNewPostPassword] = useState("");
 
-  // ✅ Load reviews from Supabase
+  // ✅ Load reviews + password from Supabase
   useEffect(() => {
     fetchReviews();
+    fetchPostPassword(); // 🔑 load password
   }, []);
 
   const fetchReviews = async () => {
@@ -45,6 +46,20 @@ export default function Vouches() {
 
     if (error) console.error("Error fetching reviews:", error);
     else setReviews(data);
+  };
+
+  const fetchPostPassword = async () => {
+    const { data, error } = await supabase
+      .from("app_settings")
+      .select("post_password")
+      .eq("id", 1)
+      .single();
+
+    if (error) {
+      console.error("Error fetching post password:", error);
+    } else if (data) {
+      setPostPassword(data.post_password);
+    }
   };
 
   // ✅ Save new review to Supabase
@@ -191,14 +206,25 @@ export default function Vouches() {
                 className="flex-1 px-4 py-2 rounded-lg bg-black/50 border border-zinc-700 text-white focus:border-red-500 outline-none"
               />
               <button
-                onClick={() => {
+                onClick={async () => {
                   if (newPostPassword.trim().length < 4) {
                     alert("Password must be at least 4 characters long.");
                     return;
                   }
-                  setPostPassword(newPostPassword);
-                  setNewPostPassword("");
-                  alert("Posting password updated successfully!");
+
+                  const { error } = await supabase
+                    .from("app_settings")
+                    .update({ post_password: newPostPassword, updated_at: new Date() })
+                    .eq("id", 1);
+
+                  if (error) {
+                    console.error("Error updating password:", error);
+                    alert("Failed to update password.");
+                  } else {
+                    setPostPassword(newPostPassword);
+                    setNewPostPassword("");
+                    alert("Posting password updated successfully!");
+                  }
                 }}
                 className="px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white rounded-lg font-semibold shadow-lg"
               >
